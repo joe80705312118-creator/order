@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>二師兄古早味 — 線上團購單</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #8B1A1A; --red-dark: #6f1414; --red-light: #fef2f2;
+    --green: #166534; --green-light: #dcfce7;
+    --text: #1a1a1a; --text-muted: #6b6b6b;
+    --border: #e5e7eb; --bg: #faf9f7; --white: #ffffff; --radius: 10px;
+  }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .hero {
+    background: var(--red);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0, rgba(255,255,255,.03) 1px, transparent 0, transparent 50%);
+    background-size: 12px 12px;
+    color: white; padding: 32px 24px 40px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:24px; background:var(--bg); clip-path:ellipse(55% 100% at 50% 100%); }
+  .hero-logo { font-size:13px; opacity:.7; letter-spacing:.1em; margin-bottom:6px; }
+  .hero h1 { font-family:'Noto Serif TC',serif; font-size:clamp(22px,5vw,32px); font-weight:700; letter-spacing:.06em; margin-bottom:6px; }
+  .hero p { font-size:13px; opacity:.8; }
+  .hero-badges { display:flex; justify-content:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .hero-badge { font-size:11px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.3); border-radius:20px; padding:3px 12px; letter-spacing:.05em; }
+
+  .container { max-width:720px; margin:0 auto; padding:24px 16px 60px; }
+
+  .card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
+  .card-header { background:#f5f0eb; padding:10px 18px; font-size:13px; font-weight:700; color:var(--red); letter-spacing:.08em; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+  .card-body { padding:18px; }
+
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-grid .full { grid-column:1/-1; }
+  .field label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:5px; font-weight:500; }
+  .field input, .field textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:9px 12px; font-size:14px; font-family:inherit; color:var(--text); background:#fafafa; transition:border-color .2s; outline:none; }
+  .field input:focus, .field textarea:focus { border-color:var(--red); background:white; }
+  .field textarea { resize:vertical; min-height:72px; }
+
+  .time-options { display:flex; gap:12px; margin-top:2px; }
+  .time-label { flex:1; border:1.5px solid var(--border); border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer; text-align:center; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .time-label input { display:none; }
+  .time-label:hover { border-color:var(--red); background:var(--red-light); }
+  .time-label.selected { border-color:var(--red); background:var(--red-light); color:var(--red); font-weight:700; }
+
+  .item-table { width:100%; border-collapse:collapse; }
+  .item-table th { background:var(--red); color:white; font-size:12px; font-weight:500; padding:9px 12px; text-align:left; letter-spacing:.04em; }
+  .item-table th.center { text-align:center; }
+  .item-table td { padding:10px 12px; border-bottom:1px solid #f0ece8; font-size:13px; vertical-align:middle; }
+  .item-table tr:last-child td { border-bottom:none; }
+  .item-table tr:hover td { background:#fdf8f5; }
+  .item-name { font-weight:500; font-size:14px; line-height:1.4; }
+  .badges { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+  .badge { font-size:10px; padding:1px 7px; border-radius:20px; font-weight:500; }
+  .b-new { background:#fee2e2; color:#991b1b; }
+  .b-veg { background:#dcfce7; color:#166534; }
+  .b-hot { background:#fff7ed; color:#9a3412; }
+  .b-limit { background:#fef9c3; color:#854d0e; }
+  .price-col { text-align:center; color:var(--text-muted); }
+  .qty-col { text-align:center; }
+  .sub-col { text-align:center; font-weight:700; min-width:56px; }
+  .qty-wrap { display:inline-flex; align-items:center; gap:8px; }
+  .qty-btn { width:28px; height:28px; border:1.5px solid var(--border); border-radius:50%; background:white; font-size:16px; cursor:pointer; color:var(--text); display:flex; align-items:center; justify-content:center; transition:all .15s; user-select:none; line-height:1; }
+  .qty-btn:hover { border-color:var(--red); background:var(--red-light); color:var(--red); }
+  .qty-num { font-size:15px; font-weight:700; min-width:22px; text-align:center; }
+  .zero { color:#d1d5db; }
+
+  .summary-bar { background:white; border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .summary-stats { display:flex; gap:24px; flex-wrap:wrap; }
+  .stat { text-align:center; }
+  .stat-label { font-size:11px; color:var(--text-muted); letter-spacing:.04em; }
+  .stat-val { font-size:20px; font-weight:700; color:var(--text); margin-top:2px; }
+  .stat-val.accent { color:var(--red); }
+  .ship-badge { font-size:12px; padding:6px 14px; border-radius:20px; font-weight:500; white-space:nowrap; transition:all .3s; }
+  .ship-ok { background:var(--green-light); color:var(--green); }
+  .ship-no { background:#fee2e2; color:#991b1b; }
+
+  .actions { display:flex; gap:10px; }
+  .btn-clear { background:white; border:1.5px solid var(--border); border-radius:8px; padding:12px 20px; font-size:14px; font-family:inherit; cursor:pointer; color:var(--text-muted); transition:all .2s; }
+  .btn-clear:hover { border-color:#999; color:var(--text); }
+  .btn-generate { flex:1; background:var(--red); color:white; border:none; border-radius:8px; padding:12px 20px; font-size:15px; font-family:inherit; font-weight:700; cursor:pointer; letter-spacing:.04em; transition:background .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-generate:hover { background:var(--red-dark); }
+  .btn-generate:disabled { background:#9ca3af; cursor:not-allowed; }
+
+  .error-msg { color:#dc2626; font-size:13px; margin-top:12px; text-align:center; display:none; padding:10px; background:#fef2f2; border-radius:8px; border:1px solid #fecaca; }
+  .error-msg.show { display:block; }
+
+  .success-box { display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:var(--radius); padding:28px 24px; text-align:center; margin-top:16px; }
+  .success-box.show { display:block; }
+  .success-icon { font-size:52px; margin-bottom:12px; }
+  .success-box h2 { font-size:22px; color:var(--green); margin-bottom:8px; }
+  .success-box p { font-size:14px; color:var(--text-muted); line-height:1.9; }
+  .order-summary-text { background:white; border:1px solid #bbf7d0; border-radius:8px; padding:14px 16px; margin:16px 0; text-align:left; font-size:13px; line-height:2; color:#14532d; white-space:pre-wrap; }
+  .btn-new-order { background:var(--red); color:white; border:none; border-radius:8px; padding:11px 28px; font-size:14px; font-family:inherit; font-weight:700; cursor:pointer; margin-top:8px; }
+  .btn-new-order:hover { background:var(--red-dark); }
+
+  .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,.4); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .footer { text-align:center; font-size:12px; color:var(--text-muted); padding:24px 16px; line-height:1.8; }
+  .footer a { color:var(--red); text-decoration:none; }
+
+  @media (max-width:520px) {
+    .form-grid { grid-template-columns:1fr; }
+    .form-grid .full { grid-column:1; }
+    .item-table th:nth-child(2), .item-table td:nth-child(2) { display:none; }
+    .summary-stats { gap:14px; }
+    .stat-val { font-size:17px; }
+    .time-options { flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-logo">二師兄古早味</div>
+  <h1>🍗 線上團購訂單</h1>
+  <p>古早味鹽水雞 • 低溫冷凍配送 • 全台宅配</p>
+  <div class="hero-badges">
+    <span class="hero-badge">滿 $2,500 免運</span>
+    <span class="hero-badge">產品責任險 1,000 萬</span>
+    <span class="hero-badge">不含防腐劑</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-header">📋 訂購資料</div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field"><label>訂購人姓名 *</label><input id="buyer" type="text" placeholder="請輸入姓名"></div>
+        <div class="field"><label>聯絡電話 *</label><input id="phone" type="tel" placeholder="請輸入電話"></div>
+        <div class="field"><label>收貨人（同訂購人免填）</label><input id="receiver" type="text" placeholder="留空同訂購人"></div>
+        <div class="field"><label>收貨人電話</label><input id="rphone" type="tel" placeholder="留空同上"></div>
+        <div class="field full"><label>收貨地址 *</label><input id="address" type="text" placeholder="請填寫完整地址（含縣市、鄉鎮、路號）"></div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="field">
+          <label>收貨時段 *</label>
+          <div class="time-options">
+            <label class="time-label" id="t1"><input type="radio" name="time" value="8-12點"> ☀️ 8–12 點（早班）</label>
+            <label class="time-label" id="t2"><input type="radio" name="time" value="13-18點"> 🌤 13–18 點（午班）</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">🛒 選擇品項</div>
+    <table class="item-table">
+      <thead>
+        <tr>
+          <th>品項</th><th>重量</th>
+          <th class="center">單價</th><th class="center">數量</th><th class="center">小計</th>
+        </tr>
+      </thead>
+      <tbody id="itemTable"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">📝 備註</div>
+    <div class="card-body">
+      <div class="field"><textarea id="note" placeholder="如有特殊需求請在此說明"></textarea></div>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-stats">
+      <div class="stat"><div class="stat-label">品項件數</div><div class="stat-val" id="totalQty">0</div></div>
+      <div class="stat"><div class="stat-label">商品總額</div><div class="stat-val" id="totalAmt">$0</div></div>
+      <div class="stat"><div class="stat-label">運費</div><div class="stat-val" id="shipping">$200</div></div>
+      <div class="stat"><div class="stat-label">應付總額</div><div class="stat-val accent" id="grandTotal">$200</div></div>
+    </div>
+    <div id="shipBadge" class="ship-badge ship-no">差 $2,500 免運</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-clear" onclick="clearAll()">清除重填</button>
+    <button class="btn-generate" id="submitBtn" onclick="submitOrder()">
+      <span id="btnIcon">📤</span><span id="btnText">送出訂單</span>
+    </button>
+  </div>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="success-box" id="successBox">
+    <div class="success-icon">🎉</div>
+    <h2>訂單已送出！</h2>
+    <p>資料已記錄，我們會盡快電話確認收貨日期，請保持電話暢通。</p>
+    <div class="order-summary-text" id="summaryText"></div>
+    <p style="font-size:12px;color:#6b6b6b;">
+      付款方式：匯款 或 貨到付款<br>
+      匯款帳號：6421 0022 1829｜二師兄商行 華南銀行東台南分行 (008)
+    </p>
+    <button class="btn-new-order" onclick="clearAll()">再填一筆</button>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>二師兄古早味</strong><br>
+  服務專線：06-2217809 / 0988-007-007 &nbsp;|&nbsp; 傳真：06-2212978<br>
+  官方網站：<a href="https://www.lumei.tw" target="_blank">www.lumei.tw</a><br>
+  <span style="color:#d1d5db">— 因原物料皆為農畜產品，各項商品內容物會隨時做調整，故均以出貨重量為準 —</span>
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbw8FeGpXwwnhdiLg90JA0fzz9ew5JR13wQIBrzd0_eDJzGOsmCmufBRwo7JP_Y1R27P/exec';
+
+const items = [
+  { name:'招牌雞爪',   weight:'約300克', price:150, badges:[] },
+  { name:'翅小腿',     weight:'約300克', price:250, badges:['limit'] },
+  { name:'雞翅',       weight:'約290克', price:250, badges:[] },
+  { name:'三杯米血',   weight:'約330克', price:120, badges:[] },
+  { name:'原味豆干',   weight:'約340克', price:150, badges:['veg'] },
+  { name:'辣味豆干',   weight:'約340克', price:150, badges:['veg','hot'] },
+  { name:'鵪鶉蛋',    weight:'約210克', price:150, badges:['veg'] },
+  { name:'七里香',     weight:'約160克', price:200, badges:['limit'] },
+  { name:'雞心',       weight:'約160克', price:200, badges:[] },
+  { name:'雞胗',       weight:'約210克', price:200, badges:[] },
+  { name:'鴨舌頭',    weight:'約165克', price:300, badges:['hot'] },
+  { name:'鴨翅',       weight:'約250克', price:200, badges:[] },
+  { name:'甜不辣',     weight:'約400克', price:120, badges:['new'] },
+  { name:'黑胡椒毛豆', weight:'約200克', price:80,  badges:['veg'] },
+];
+const badgeMap = {
+  new:   ['b-new','NEW'], veg: ['b-veg','蛋奶素'],
+  hot:   ['b-hot','辣'],  limit:['b-limit','限量'],
+};
+const qtys = new Array(items.length).fill(0);
+
+function renderTable() {
+  const tb = document.getElementById('itemTable');
+  tb.innerHTML = '';
+  items.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    const bhtml = item.badges.map(b=>`<span class="badge ${badgeMap[b][0]}">${badgeMap[b][1]}</span>`).join('');
+    tr.innerHTML = `
+      <td><div class="item-name">${item.name}</div><div class="badges">${bhtml}</div></td>
+      <td style="color:#9ca3af;font-size:12px">${item.weight}</td>
+      <td class="price-col">$${item.price}</td>
+      <td class="qty-col">
+        <div class="qty-wrap">
+          <button class="qty-btn" onclick="adj(${i},-1)">−</button>
+          <span class="qty-num" id="q${i}">0</span>
+          <button class="qty-btn" onclick="adj(${i},1)">+</button>
+        </div>
+      </td>
+      <td class="sub-col" id="s${i}"><span class="zero">—</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function adj(i, d) {
+  qtys[i] = Math.max(0, qtys[i]+d);
+  document.getElementById('q'+i).textContent = qtys[i];
+  document.getElementById('s'+i).innerHTML =
+    qtys[i]>0 ? '$'+(qtys[i]*items[i].price) : '<span class="zero">—</span>';
+  updateSummary();
+}
+
+function updateSummary() {
+  const totalAmt = qtys.reduce((s,q,i)=>s+q*items[i].price, 0);
+  const totalQty = qtys.reduce((a,b)=>a+b, 0);
+  const shipping = totalAmt>=2500 ? 0 : 200;
+  document.getElementById('totalQty').textContent = totalQty;
+  document.getElementById('totalAmt').textContent = '$'+totalAmt.toLocaleString();
+  document.getElementById('shipping').textContent = shipping===0?'免運':'$'+shipping;
+  document.getElementById('grandTotal').textContent = '$'+(totalAmt+shipping).toLocaleString();
+  const badge = document.getElementById('shipBadge');
+  if (totalAmt>=2500) { badge.textContent='✓ 已達免運門檻'; badge.className='ship-badge ship-ok'; }
+  else { badge.textContent='差 $'+(2500-totalAmt).toLocaleString()+' 免運'; badge.className='ship-badge ship-no'; }
+}
+
+document.querySelectorAll('input[name="time"]').forEach((r,idx)=>{
+  r.addEventListener('change',()=>{
+    document.querySelectorAll('.time-label').forEach(l=>l.classList.remove('selected'));
+    document.getElementById('t'+(idx+1)).classList.add('selected');
+  });
+});
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 4000);
+}
+
+async function submitOrder() {
+  const buyer   = document.getElementById('buyer').value.trim();
+  const phone   = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const timeEl  = document.querySelector('input[name="time"]:checked');
+  if (!buyer)   { showError('⚠️ 請填寫訂購人姓名！'); return; }
+  if (!phone)   { showError('⚠️ 請填寫聯絡電話！'); return; }
+  if (!address) { showError('⚠️ 請填寫收貨地址！'); return; }
+  if (!timeEl)  { showError('⚠️ 請選擇收貨時段！'); return; }
+  const totalAmt = qtys.reduce((s,q,i)=>s+q*items[i].price,0);
+  if (totalAmt===0) { showError('⚠️ 請至少選擇一項商品！'); return; }
+
+  const receiver = document.getElementById('receiver').value.trim()||buyer;
+  const rphone   = document.getElementById('rphone').value.trim()||phone;
+  const note     = document.getElementById('note').value.trim();
+  const shipping = totalAmt>=2500?0:200;
+  const grand    = totalAmt+shipping;
+  const now      = new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
+
+  const payload = { time:now, buyer, phone, receiver, rphone, address, period:timeEl.value, totalAmt, shipping, grandTotal:grand, note };
+  qtys.forEach((q,i)=>{ payload['q'+i]=q; });
+
+  // 送出中
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  document.getElementById('btnIcon').innerHTML = '<span class="spinner"></span>';
+  document.getElementById('btnText').textContent = ' 送出中...';
+
+  try {
+    await fetch(SHEET_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    // 建立摘要
+    let lines = [
+      `訂購人：${buyer}　電話：${phone}`,
+      `收貨人：${receiver}　電話：${rphone}`,
+      `地　址：${address}`,
+      `時　段：${timeEl.value}`,
+      '────────────────',
+    ];
+    items.forEach((item,i)=>{ if(qtys[i]>0) lines.push(`${item.name} ×${qtys[i]}　＝ $${(qtys[i]*item.price).toLocaleString()}`); });
+    lines.push('────────────────');
+    lines.push(`商品總額：$${totalAmt.toLocaleString()}`);
+    lines.push(`運　　費：${shipping===0?'免運':'$'+shipping}`);
+    lines.push(`應付總額：$${grand.toLocaleString()}`);
+    if(note) lines.push(`備　　註：${note}`);
+    document.getElementById('summaryText').textContent = lines.join('\n');
+    document.getElementById('successBox').classList.add('show');
+    document.getElementById('successBox').scrollIntoView({behavior:'smooth'});
+
+  } catch(err) {
+    showError('⚠️ 送出失敗，請稍後再試或直接電話聯繫店家。');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnIcon').textContent = '📤';
+    document.getElementById('btnText').textContent = '送出訂單';
+  }
+}
+
+function clearAll() {
+  qtys.fill(0);
+  ['buyer','phone','receiver','rphone','address','note'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('input[name="time"]').forEach(r=>r.checked=false);
+  document.querySelectorAll('.time-label').forEach(l=>l.classList.remove('selected'));
+  document.getElementById('successBox').classList.remove('show');
+  document.getElementById('errorMsg').classList.remove('show');
+  renderTable(); updateSummary();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+renderTable();
+updateSummary();
+</script>
+</body>
+</html>
